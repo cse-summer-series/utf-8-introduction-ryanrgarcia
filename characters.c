@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
+
+// Returns the number of bytes a character takes up according to UTF-8 
 unsigned int num_bytes(char b) {
   //    0xxxxxxx        1xxxxxxx
   //  & 10000000        10000000
@@ -18,9 +21,13 @@ unsigned int num_bytes(char b) {
   else if((b & 0b11100000) == 0b11000000) { return 2; }
   else if((b & 0b11110000) == 0b11100000) { return 3; }
   else if((b & 0b11111000) == 0b11110000) { return 4; }
+  else if((b & 0b11111100) == 0b11111000) { return 5; }
+  else if((b & 0b11111110) == 0b11111100) { return 6; }
   else { return -1; }
 }
 
+
+// Returns the amount of unicode characters in a string not taking into account the size of bytes from UTF-8
 unsigned int utf8_strlen(char* unicode) {
   unsigned int len = strlen(unicode); // count of bytes in this string
   unsigned int bytes_seen = 0;
@@ -51,31 +58,94 @@ unsigned int utf8_strlen(char* unicode) {
  *   bytes_for("成龙", 2) -> 6
  *   bytes_for("成龙", 3) -> -1
  */
+
+// Function takes a UTF-8 string and a character count, and returns the number of bytes in that UTF-8 string taken up by the first n characters
 unsigned int bytes_for(char* unicode, unsigned int n) {
-  return 0;
+  // Counter to keep track of the total number of bytes
+  int numBytesTotal = 0;
+
+  // If character count n exceeds UTF-8 specified length (amount of characters) of the string, function returns -1
+  if (n > utf8_strlen(unicode)) {
+    return -1;
+  }
+
+  /*
+    Variable j used as index to access a character in the string
+    Incremented by the number of bytes the character takes up, given by the return value of the num_bytes function
+  */ 
+  int j = 0;
+
+  // For loop that loops n number of times
+  for (int i = 0; i < n; i++) {
+    // Variable that stores the number of bytes of a single character, given by the return value of the num_bytes function
+    int numBytes = num_bytes(unicode[j]);
+
+    // Increments counter by number of bytes
+    numBytesTotal += numBytes;
+
+    // Increments index counter by number of bytes
+    j += numBytes;
+  }
+
+  // Returns total number of bytes in the UTF-8 string taken up by the first n characters
+  return numBytesTotal;
 }
 
+
+
 int main(int argc, char** argv) {
+
   if(argc < 2) {
     printf("Try running with ./welcome your-name\n");
     return 1;
   }
+  
+
   char* name = argv[1];
   int length = strlen(name);
   unsigned int ulen = utf8_strlen(name);
   printf("Hi %s, your name is %d characters long according to utf8_strlen.\n", name, ulen);
-  printf("The number of bytes needed for the first character are: %c\n", name[0]);
 
-  printf("The invididual characters are: \n");
+  // gives wrong num of bytes because after getting num of bytes for that character, I need to increment the counter by that amount to reach the next valid character
+  
+  // Converts input string to an integer using atoi function
+  int numChars = atoi(argv[2]);
+
+  // Prints the amount of bytes in the UTF-8 string taken up by the first n characters by calling bytes_for function
+  printf("%d\n", bytes_for(name, numChars));
+
+
+
+
+
+
+
+
+
+
+
+  /*for (int i = 0; i < ulen; i++) {
+    int numBytes = num_bytes(name[0]);
+    printf("Number of bytes at %d index: %d\n", i, numBytes);
+  }
+  */
+
+
+  //int num = argv[2];
+  //unsigned int bytes = bytes_for(name, 3);
+  //printf("Bytes for %s is %d\n", name, bytes);
+
+  //printf("The number of bytes needed for the first character are: %c\n", name[0]);
+
+  /*printf("The invididual characters are: \n");
   for(int i = 0; i < length; i += 1) {
     unsigned char letter = name[i];
     printf("%d(%x) ", letter, letter);
   }
   printf("\n");
-
+*/
   return 0;
 }
-
 
 
 /*
